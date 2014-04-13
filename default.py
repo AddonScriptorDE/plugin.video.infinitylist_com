@@ -13,9 +13,9 @@ socket.setdefaulttimeout(30)
 pluginhandle = int(sys.argv[1])
 xbox = xbmc.getCondVisibility("System.Platform.xbox")
 addon = xbmcaddon.Addon(id='plugin.video.infinitylist_com')
-forceViewMode = addon.getSetting("forceViewMode") == "true"
+forceViewMode = addon.getSetting("forceView") == "true"
 useThumbAsFanart = addon.getSetting("useThumbAsFanart") == "true"
-viewMode = str(addon.getSetting("viewMode"))
+viewMode = str(addon.getSetting("viewID"))
 translation = addon.getLocalizedString
 urlMain = "http://www.infinitylist.com"
 
@@ -24,11 +24,10 @@ def index():
     xbmcplugin.addSortMethod(pluginhandle, xbmcplugin.SORT_METHOD_LABEL)
     addDir(translation(30002), "ALL", 'listVideosMain', "")
     content = getUrl(urlMain)
-    content = content[content.find('<ul id="mainMenu" class="menu">'):]
-    content = content[:content.find('</ul>')]
-    match = re.compile('<li class="menuItem-.+?"><h2><a href="http://www.infinitylist.com/(.+?)/">(.+?)</a></h2></li>', re.DOTALL).findall(content)
+    match = re.compile('<li class="category-(.+?)".+?<h3>.+?>(.+?)<', re.DOTALL).findall(content)
     for id, title in match:
-        addDir(title, id, 'listVideosMain', "")
+        if title!="All":
+            addDir(title, id, 'listVideosMain', "")
     xbmcplugin.endOfDirectory(pluginhandle)
 
 
@@ -68,14 +67,14 @@ def listVideos(url):
                 length = str(int(match[0])/60)
                 if length == "0":
                     length = "1"
-        match = re.compile('<span class="text">(.+?)</span>', re.DOTALL).findall(entry)
+        match = re.compile('<span class="title">(.+?)</span>', re.DOTALL).findall(entry)
         title = cleanTitle(match[0])
         match = re.compile('data-thumbnail-image-u-r-l="(.+?)"', re.DOTALL).findall(entry)
         thumb = match[0]
         matchYoutube = re.compile('data-youtube-video-i-d="(.+?)"', re.DOTALL).findall(entry)
         matchVimeo = re.compile('data-vimeo-video-i-d="(.+?)"', re.DOTALL).findall(entry)
-        matchYoutube2 = re.compile('http://www.youtube.com/embed/(.+?)\\?', re.DOTALL).findall(entry)
-        matchVimeo2 = re.compile('http://player.vimeo.com/video/(.+?)\\?', re.DOTALL).findall(entry)
+        matchYoutube2 = re.compile('youtube.com/embed/(.+?)\\?', re.DOTALL).findall(entry)
+        matchVimeo2 = re.compile('player.vimeo.com/video/(.+?)\\?', re.DOTALL).findall(entry)
         url = ""
         if matchYoutube:
             addLink(title, matchYoutube[0], 'playYoutubeVideo', thumb, date, length)
@@ -127,7 +126,7 @@ def playRandom(url):
     spl = content.split('<div id="videoPost-')
     for i in range(1, len(spl), 1):
         entry = spl[i]
-        match = re.compile('<span class="text">(.+?)</span>', re.DOTALL).findall(entry)
+        match = re.compile('<span class="title">(.+?)</span>', re.DOTALL).findall(entry)
         title = cleanTitle(match[0])
         matchYoutube = re.compile('data-youtube-video-i-d="(.+?)"', re.DOTALL).findall(entry)
         matchVimeo = re.compile('data-vimeo-video-i-d="(.+?)"', re.DOTALL).findall(entry)
